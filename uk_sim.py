@@ -68,14 +68,8 @@ def fit_and_forecast(ts_series, params, horizon, now_time):
 # =========================
 # 3) UI
 # =========================
-# --- 위쪽(유틸/상수/함수)은 그대로 두고, UI 부분만 교체 ---
-
-
-import streamlit as st
-from PIL import Image
-
-import streamlit as st
 import base64
+from PIL import Image
 
 # 로고 파일 경로
 logo_path = "k-water ai lab.jpg"
@@ -96,28 +90,35 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-
+# 체크박스: 기본 uk_data.csv 사용 여부
 use_default = st.checkbox("Use default data (uk_data.csv)", value=True)
 
 uploaded_file = None
 if use_default:
-    # 같은 폴더의 uk_data.csv 사용
     try:
         uploaded_file = "uk_data.csv"
         st.info("📂 Using default file: uk_data.csv")
     except Exception as e:
         st.error(f"Default file not found: {e}")
 else:
-    # 사용자가 직접 업로드
     uploaded_file = st.file_uploader("Upload CSV File", type=["csv"])
 
 if uploaded_file is not None:
     # 1) 데이터 로드 & 기본 선택
     df = pd.read_csv(uploaded_file)
-    TIME_COL  = st.selectbox("Select Time Column", options=df.columns, index=0, key="timecol")
-    VALUE_COL = st.selectbox("Select Value Column", options=df.columns, index=1, key="valuecol")
-
     df.columns = df.columns.str.strip()
+
+    # time / validated value 기본 선택 설정
+    time_default = 0
+    value_default = 1
+    if "time" in df.columns:
+        time_default = df.columns.get_loc("time")
+    if "validated value" in df.columns:
+        value_default = df.columns.get_loc("validated value")
+
+    TIME_COL  = st.selectbox("Select Time Column", options=df.columns, index=time_default, key="timecol")
+    VALUE_COL = st.selectbox("Select Value Column", options=df.columns, index=value_default, key="valuecol")
+
     df[TIME_COL]  = pd.to_datetime(df[TIME_COL], dayfirst=True, errors="coerce")
     df[VALUE_COL] = pd.to_numeric(df[VALUE_COL], errors="coerce")
     df = df.dropna(subset=[TIME_COL, VALUE_COL]).sort_values(TIME_COL).set_index(TIME_COL)
@@ -130,15 +131,14 @@ if uploaded_file is not None:
     with colA:
         z = st.slider("Anomaly threshold (Z-sigma)", 1.0, 6.0, 3.0, 0.1)
     with colB:
-        # 필요하면 예측 기간/앙상블 학습일 등도 슬라이더/멀티선택으로 뽑을 수 있음
         pass
 
     col1, col2, col3 = st.columns([1,2,1])
     with col2:
         run = st.button("🚀 **Run Analysis**", use_container_width=True)
+
     if run:
         with st.spinner("Running analysis..."):
-
             # === EDA ===
             st.subheader("📊 Exploratory Data Analysis")
             fig, axes = plt.subplots(2, 2, figsize=(14, 8))
@@ -242,9 +242,7 @@ if uploaded_file is not None:
 
                     st.error(f"🚨 ABNORMAL — {name}: {n_anom} anomalies detected")
                     st.dataframe(anom_df, use_container_width=True)
-
                 else:
                     st.success(f"✅ No anomalies detected in {name}")
 
         st.success("✅ Analysis complete! You can now explore the result graphs above.")
-
