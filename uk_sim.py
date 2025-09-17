@@ -97,7 +97,20 @@ st.markdown(
 )
 
 
-uploaded_file = st.file_uploader("Upload CSV File", type=["csv"])
+use_default = st.checkbox("Use default data (uk_data.csv)", value=True)
+
+uploaded_file = None
+if use_default:
+    # 같은 폴더의 uk_data.csv 사용
+    try:
+        uploaded_file = "uk_data.csv"
+        st.info("📂 Using default file: uk_data.csv")
+    except Exception as e:
+        st.error(f"Default file not found: {e}")
+else:
+    # 사용자가 직접 업로드
+    uploaded_file = st.file_uploader("Upload CSV File", type=["csv"])
+
 if uploaded_file is not None:
     # 1) 데이터 로드 & 기본 선택
     df = pd.read_csv(uploaded_file)
@@ -234,3 +247,4 @@ if uploaded_file is not None:
                     st.success(f"✅ No anomalies detected in {name}")
 
         st.success("✅ Analysis complete! You can now explore the result graphs above.")
+
