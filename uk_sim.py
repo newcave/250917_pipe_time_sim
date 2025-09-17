@@ -126,12 +126,6 @@ if uploaded_file is not None:
 
     st.write("Data Preview", df.head())
 
-    # === 이하 기존 분석/시각화 코드 동일 ===
-    # (EDA, Holt-Winters, Prophet, Ensemble, Anomaly Detection...)
-
-
-    st.write("Data Preview", df.head())
-
     # 2) 분석 옵션 + 실행 버튼
     st.markdown("---")
     colA, colB = st.columns(2)
@@ -253,5 +247,6 @@ if uploaded_file is not None:
                     st.success(f"✅ No anomalies detected in {name}")
 
         st.success("✅ Analysis complete! You can now explore the result graphs above.")
+
 
 
