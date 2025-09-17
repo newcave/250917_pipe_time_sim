@@ -106,11 +106,14 @@ if uploaded_file is not None:
     # === 기본 컬럼 선택 로직 ===
     time_default = 0
     value_default = 1
+
+    # "Date Of Read" 컬럼이 있으면 무조건 Time 기본값으로
+    if "Date Of Read" in df.columns:
+        time_default = df.columns.get_loc("Date Of Read")
+
+    # "Validated Value" 포함된 컬럼 자동 선택
     for col in df.columns:
-        col_lower = col.lower()
-        if "date" in col_lower or "time" in col_lower:
-            time_default = df.columns.get_loc(col)
-        if "validated value" in col_lower:
+        if "validated value" in col.lower():
             value_default = df.columns.get_loc(col)
 
     TIME_COL  = st.selectbox("Select Time Column", options=df.columns, index=time_default, key="timecol")
@@ -250,4 +253,5 @@ if uploaded_file is not None:
                     st.success(f"✅ No anomalies detected in {name}")
 
         st.success("✅ Analysis complete! You can now explore the result graphs above.")
+
 
