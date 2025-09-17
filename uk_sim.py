@@ -71,15 +71,11 @@ def fit_and_forecast(ts_series, params, horizon, now_time):
 import base64
 from PIL import Image
 
-# 로고 파일 경로
 logo_path = "k-water ai lab.jpg"
-
-# 로고 이미지를 base64로 인코딩
 with open(logo_path, "rb") as f:
     logo_data = f.read()
 logo_base64 = base64.b64encode(logo_data).decode()
 
-# HTML로 로고 + 제목 표시
 st.markdown(
     f"""
     <div style="display:flex; align-items:center;">
@@ -90,7 +86,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# 체크박스: 기본 uk_data.csv 사용 여부
+# 기본 데이터 사용 여부
 use_default = st.checkbox("Use default data (uk_data.csv)", value=True)
 
 uploaded_file = None
@@ -104,24 +100,32 @@ else:
     uploaded_file = st.file_uploader("Upload CSV File", type=["csv"])
 
 if uploaded_file is not None:
-    # 1) 데이터 로드 & 기본 선택
     df = pd.read_csv(uploaded_file)
     df.columns = df.columns.str.strip()
 
-    # time / validated value 기본 선택 설정
+    # === 기본 컬럼 선택 로직 ===
     time_default = 0
     value_default = 1
-    if "time" in df.columns:
-        time_default = df.columns.get_loc("time")
-    if "validated value" in df.columns:
-        value_default = df.columns.get_loc("validated value")
+    for col in df.columns:
+        col_lower = col.lower()
+        if "date" in col_lower or "time" in col_lower:
+            time_default = df.columns.get_loc(col)
+        if "validated value" in col_lower:
+            value_default = df.columns.get_loc(col)
 
     TIME_COL  = st.selectbox("Select Time Column", options=df.columns, index=time_default, key="timecol")
     VALUE_COL = st.selectbox("Select Value Column", options=df.columns, index=value_default, key="valuecol")
 
+    # 전처리
     df[TIME_COL]  = pd.to_datetime(df[TIME_COL], dayfirst=True, errors="coerce")
     df[VALUE_COL] = pd.to_numeric(df[VALUE_COL], errors="coerce")
     df = df.dropna(subset=[TIME_COL, VALUE_COL]).sort_values(TIME_COL).set_index(TIME_COL)
+
+    st.write("Data Preview", df.head())
+
+    # === 이하 기존 분석/시각화 코드 동일 ===
+    # (EDA, Holt-Winters, Prophet, Ensemble, Anomaly Detection...)
+
 
     st.write("Data Preview", df.head())
 
@@ -246,3 +250,4 @@ if uploaded_file is not None:
                     st.success(f"✅ No anomalies detected in {name}")
 
         st.success("✅ Analysis complete! You can now explore the result graphs above.")
+
